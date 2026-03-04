@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>콜페스 취향표 메이커</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#d1d5db;
+      --header:#575b61;
+      --headerText:#ffffff;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial;
+      color:var(--text);
+      background:linear-gradient(180deg,#fafafa,#fff);
+    }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:26px 18px 44px;
+    }
+
+    .card{
+      background:var(--bg);
+      border:1px solid rgba(17,24,39,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-h{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(17,24,39,.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .card-h strong{font-size:14px;}
+
+    .btnRow{ display:flex; flex-wrap:wrap; gap:10px; }
+    button{
+      appearance:none;
+      border:1px solid rgba(17,24,39,.18);
+      background:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:13px;
+    }
+    button.danger{
+      background:#fff;
+      border-color: rgba(239,68,68,.45);
+      color:#b91c1c;
+    }
+    button:active{ transform: translateY(1px); }
+
+    /* Preview (export area) */
+    .preview{
+      padding:22px 18px 18px;
+    }
+    .title{
+      text-align:center;
+      font-weight:900;
+      font-size:34px;
+      letter-spacing:.3px;
+      margin:0 0 14px;
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:12px 18px;
+      align-items:center;
+      padding:0 6px 18px;
+    }
+    .legend-item{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      font-size:16px;
+      font-weight:700;
+    }
+    .dot{
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.10);
+      box-shadow:0 1px 0 rgba(0,0,0,.04) inset;
+      flex:0 0 20px;
+      background:#fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      table-layout:fixed;
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    th, td{
+      border-right:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      height:70px;
+      text-align:center;
+      vertical-align:middle;
+      padding:8px;
+      font-weight:800;
+      user-select:none;
+    }
+    tr:last-child td, tr:last-child th{ border-bottom:0; }
+    td:last-child, th:last-child{ border-right:0; }
+
+    th.corner{
+      background:var(--header);
+      color:var(--headerText);
+      width:92px;
+      font-weight:900;
+    }
+
+    th.colHead, th.rowHead{
+      background:var(--header);
+      color:var(--headerText);
+      font-weight:900;
+    }
+
+    th.rowHead{ width:92px; }
+
+    td.cell{
+      background:#fff;
+      cursor:pointer;
+      transition: transform .06s ease, box-shadow .12s ease;
+      position:relative;
+    }
+    td.cell:hover{
+      transform: translateY(-1px);
+      box-shadow:0 6px 14px rgba(0,0,0,.08);
+    }
+    td.cell.locked{
+      cursor:not-allowed;
+      opacity:.75;
+    }
+    td.cell.locked:hover{ transform:none; box-shadow:none; }
+
+    td.cell .tag{
+      display:inline-block;
+      max-width:100%;
+      font-size:18px;
+      line-height:1.1;
+      word-break:keep-all;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Editor */
+    .tools{ padding:14px 16px 18px; }
+    .mini{ font-size:12px; color:var(--muted); line-height:1.5; }
+
+    .paletteEditor{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:0;
+      margin:0;
+      list-style:none;
+    }
+    .palItem{
+      display:grid;
+      grid-template-columns: 42px 1fr 74px;
+      gap:10px;
+      align-items:center;
+    }
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:10px 0 8px;
+    }
+    input[type="text"]{
+      width:100%;
+      padding:10px 10px;
+      border:1px solid rgba(17,24,39,.18);
+      border-radius:12px;
+      font-size:14px;
+      outline:none;
+    }
+    input[type="color"]{
+      width:42px;
+      height:42px;
+      border:0;
+      padding:0;
+      background:transparent;
+      cursor:pointer;
+    }
+
+    /* Picker popup */
+    .picker{
+      position:fixed;
+      z-index:9999;
+      background:#fff;
+      border:1px solid rgba(17,24,39,.12);
+      border-radius:14px;
+      box-shadow:0 18px 40px rgba(0,0,0,.14);
+      padding:10px;
+      min-width:210px;
+      display:none;
+    }
+    .picker .opt{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:13px;
+    }
+    .picker .opt:hover{ background:#f3f4f6; }
+    .picker .opt .dot{ width:16px; height:16px; flex:0 0 16px; }
+    .picker .sep{ height:1px; background:rgba(17,24,39,.10); margin:8px 0; }
+
+    .note{
+      padding:12px 16px;
+      border-top:1px solid rgba(17,24,39,.08);
+      background:#fcfcfc;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="card">
+      <div class="card-h">
+        <strong>취향표</strong>
+        <div class="btnRow">
+          <button id="btnExport">이미지로 내보내기(PNG)</button>
+          <button class="danger" id="btnReset">전체 초기화</button>
+        </div>
+      </div>
+
+      <!-- 이 영역이 그대로 PNG로 저장됩니다 -->
+      <div class="preview" id="exportArea">
+        <h1 class="title" id="title">CORTIS RPS 취향표</h1>
+        <div class="legend" id="legend"></div>
+        <table id="matrix" aria-label="취향표"></table>
+      </div>
+
+      <div class="note">
+        <b>사용법</b> · 셀을 클릭하면 작은 팝업이 뜨고, 거기서 의미(색)를 선택합니다. 바깥을 클릭하면 닫혀요.<br/>
+        <b>저장</b> · 칠한 결과는 자동으로 이 브라우저에 저장됩니다.
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <div class="card">
+      <div class="card-h"><strong>범례 편집</strong></div>
+      <div class="tools">
+
+        <label>색상과 의미</label>
+        <ul class="paletteEditor" id="palEditor"></ul>
+        <div class="btnRow" style="margin-top:12px;">
+          <button id="btnAddPal">색 추가</button>
+        </div>
+        <div class="mini" style="margin-top:10px;">
+          * 색을 삭제하면, 이미 칠해진 셀은 가능한 범위로 자동 보정됩니다.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- picker popup -->
+  <div class="picker" id="picker" role="dialog" aria-label="색 선택"></div>
+
+  <script>
+    // =====================================================
+    // CONFIG (관리자용) — 여기만 수정하면 됨
+    // =====================================================
+    const CONFIG = {
+      title: 'CORTIS RPS 취향표',
+      // 멤버(행/열 고정)
+      names: ['마틴','제임스','주훈','성현','건호'],
+      // 셀 텍스트(커플명) 고정: labels[r][c]
+      labels: [
+        ['',   '젯틴','훈틴','성띤','낭틴'],
+        ['틴젯','','눟젯','셩젯','낭젯'],
+        ['틴훈','젯쮸','','셩쮼','낭쮼'],
+        ['틴셩','젯셩','쮸엄','','낭셩'],
+        ['틴껀','젬껀','쮸건','엄껀',''],
+      ],
+      diagonalClickable: false,
+      storageKey: 'cortis_pref_matrix_v2'
+    };
+
+    // =====================================================
+    // STATE
+    // =====================================================
+    const defaultState = {
+      palette: [
+        { label:'OTP', color:'#f5a8ac' },
+        { label:'좋음', color:'#f6d2a7' },
+        { label:'관심', color:'#f7f2b2' },
+        { label:'보통', color:'#c9e8bb' },
+        { label:'생각없음', color:'#ffffff' },
+        { label:'지뢰', color:'#000000' },
+      ],
+      // cell values: 0=empty, 1..paletteLen
+      cells: []
+    };
+
+    let state = structuredClone(defaultState);
+
+    // =====================================================
+    // DOM
+    // =====================================================
+    const elTitle = document.getElementById('title');
+    const legend = document.getElementById('legend');
+    const matrix = document.getElementById('matrix');
+    const palEditor = document.getElementById('palEditor');
+
+    const btnAddPal = document.getElementById('btnAddPal');
+    const btnReset = document.getElementById('btnReset');
+    const btnExport = document.getElementById('btnExport');
+
+    const picker = document.getElementById('picker');
+    let pickerOpenFor = null; // {r,c,anchorRect}
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function ensureCells(){
+      const n = CONFIG.names.length;
+      if (!Array.isArray(state.cells) || state.cells.length !== n){
+        state.cells = Array.from({length:n}, () => Array.from({length:n}, () => 0));
+        return;
+      }
+      for (let r=0;r<n;r++){
+        if (!Array.isArray(state.cells[r]) || state.cells[r].length !== n){
+          state.cells[r] = Array.from({length:n}, () => 0);
+        }
+      }
+    }
+
+    function saveState(){ /* no-op */ }
+
+    function loadState(){
+  return structuredClone(defaultState);
+}
+
+    function paletteColorByValue(v){
+      if (!v) return '#ffffff';
+      const idx = v - 1;
+      return state.palette[idx]?.color ?? '#ffffff';
+    }
+
+    function cellText(r,c){
+      return (CONFIG.labels?.[r]?.[c] ?? '').toString();
+    }
+
+    function closePicker(){
+      picker.style.display = 'none';
+      pickerOpenFor = null;
+    }
+
+    function openPicker(r,c, anchorRect){
+      pickerOpenFor = {r,c, anchorRect};
+      buildPicker();
+      positionPicker(anchorRect);
+      picker.style.display = 'block';
+    }
+
+    function positionPicker(anchorRect){
+      const pad = 10;
+      const x0 = anchorRect.left + window.scrollX;
+      const y0 = anchorRect.bottom + window.scrollY;
+
+      picker.style.left = '0px';
+      picker.style.top = '0px';
+      picker.style.display = 'block';
+      const pr = picker.getBoundingClientRect();
+
+      let x = x0;
+      let y = y0 + 6;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const maxX = window.scrollX + vw - pr.width - pad;
+      const maxY = window.scrollY + vh - pr.height - pad;
+
+      x = clamp(x, window.scrollX + pad, maxX);
+      y = clamp(y, window.scrollY + pad, maxY);
+
+      if (y0 + pr.height + 16 > window.scrollY + vh && anchorRect.top - pr.height > 0){
+        y = anchorRect.top + window.scrollY - pr.height - 6;
+      }
+
+      picker.style.left = x + 'px';
+      picker.style.top = y + 'px';
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+    }
+
+    function buildPicker(){
+      if (!pickerOpenFor) return;
+      const {r,c} = pickerOpenFor;
+
+      picker.innerHTML = '';
+
+      const empty = document.createElement('div');
+      empty.className = 'opt';
+      empty.innerHTML = `<span class="dot" style="background:#ffffff"></span><span>비우기</span>`;
+      empty.addEventListener('click', () => {
+        state.cells[r][c] = 0;
+        renderMatrix();
+        saveState();
+        closePicker();
+      });
+      picker.appendChild(empty);
+
+      const sep = document.createElement('div');
+      sep.className = 'sep';
+      picker.appendChild(sep);
+
+      state.palette.forEach((p, idx) => {
+        const opt = document.createElement('div');
+        opt.className = 'opt';
+        opt.innerHTML = `<span class="dot" style="background:${p.color}"></span><span>${escapeHtml(p.label)}</span>`;
+        opt.addEventListener('click', () => {
+          state.cells[r][c] = idx + 1;
+          renderMatrix();
+          saveState();
+          closePicker();
+        });
+        picker.appendChild(opt);
+      });
+    }
+
+    // =====================================================
+    // RENDER
+    // =====================================================
+    function renderLegend(){
+      legend.innerHTML = '';
+      state.palette.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.style.background = p.color;
+        const text = document.createElement('span');
+        text.textContent = p.label;
+        item.append(dot, text);
+        legend.appendChild(item);
+      });
+    }
+
+    function renderPaletteEditor(){
+      palEditor.innerHTML = '';
+      state.palette.forEach((p, i) => {
+        const li = document.createElement('li');
+        li.className = 'palItem';
+
+        const color = document.createElement('input');
+        color.type = 'color';
+        color.value = p.color;
+        color.addEventListener('input', () => {
+          p.color = color.value;
+          renderLegend();
+          renderMatrix();
+          saveState();
+        });
+
+        const label = document.createElement('input');
+        label.type = 'text';
+        label.value = p.label;
+        label.placeholder = '의미(라벨)';
+        label.addEventListener('input', () => {
+          p.label = label.value;
+          renderLegend();
+          saveState();
+        });
+
+        const del = document.createElement('button');
+        del.className = 'danger';
+        del.textContent = '삭제';
+        del.addEventListener('click', () => {
+          if (state.palette.length <= 1) return;
+          state.palette.splice(i,1);
+          const max = state.palette.length;
+          ensureCells();
+          for (let r=0;r<state.cells.length;r++){
+            for (let c=0;c<state.cells.length;c++){
+              state.cells[r][c] = clamp(state.cells[r][c], 0, max);
+            }
+          }
+          renderLegend();
+          renderPaletteEditor();
+          renderMatrix();
+          saveState();
+        });
+
+        li.append(color, label, del);
+        palEditor.appendChild(li);
+      });
+    }
+
+    function renderMatrix(){
+      ensureCells();
+      const n = CONFIG.names.length;
+      matrix.innerHTML = '';
+
+      const trHead = document.createElement('tr');
+      const thCorner = document.createElement('th');
+      thCorner.className = 'corner';
+      thCorner.textContent = '';
+      trHead.appendChild(thCorner);
+
+      for (let c=0;c<n;c++){
+        const th = document.createElement('th');
+        th.className = 'colHead';
+        th.textContent = CONFIG.names[c];
+        trHead.appendChild(th);
+      }
+      matrix.appendChild(trHead);
+
+      for (let r=0;r<n;r++){
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.className = 'rowHead';
+        th.textContent = CONFIG.names[r];
+        tr.appendChild(th);
+
+        for (let c=0;c<n;c++){
+          const td = document.createElement('td');
+          td.className = 'cell';
+
+          const isDiag = r === c;
+          const locked = isDiag && !CONFIG.diagonalClickable;
+          if (locked) td.classList.add('locked');
+
+          td.style.background = paletteColorByValue(state.cells[r][c]);
+
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = cellText(r,c);
+          td.appendChild(span);
+
+          td.addEventListener('click', (e) => {
+            if (locked) return;
+            const rect = td.getBoundingClientRect();
+            openPicker(r,c,rect);
+            e.stopPropagation();
+          });
+
+          tr.appendChild(td);
+        }
+        matrix.appendChild(tr);
+      }
+
+      if (pickerOpenFor){
+        positionPicker(pickerOpenFor.anchorRect);
+      }
+    }
+
+    // =====================================================
+    // EXPORT (Canvas render)
+    // =====================================================
+    function exportPNG(){
+      const n = CONFIG.names.length;
+      const cellH = 70;
+      const headW = 92;
+      const cellW = 140;
+
+      const tableW = headW + cellW * n;
+      const tableH = cellH * (n + 1);
+
+      const pad = 26;
+      const titleH = 54;
+      const legendGapX = 18;
+      const legendGapY = 12;
+      const dotSize = 18;
+      const legendFont = 18;
+
+      const ctxTmp = document.createElement('canvas').getContext('2d');
+      ctxTmp.font = `800 ${legendFont}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial`;
+
+      const legendItems = state.palette.map(p => ({label:p.label, color:p.color}));
+      const legendMaxW = tableW;
+
+      const legendLines = [];
+      let line = [];
+      let lineW = 0;
+      const itemW = (lbl) => dotSize + 10 + ctxTmp.measureText(lbl).width;
+
+      for (const it of legendItems){
+        const w = itemW(it.label) + (line.length ? legendGapX : 0);
+        if (lineW + w > legendMaxW && line.length){
+          legendLines.push({items: line, width: lineW});
+          line = [it];
+          lineW = itemW(it.label);
+        } else {
+          line.push(it);
+          lineW += w;
+        }
+      }
+      if (line.length) legendLines.push({items: line, width: lineW});
+
+      const legendH = legendLines.length * (dotSize + legendGapY);
+      const totalW = tableW + pad*2;
+      const totalH = pad + titleH + legendH + 18 + tableH + pad;
+
+      const scale = 3;
+      const canvas = document.createElement('canvas');
+      canvas.width = totalW * scale;
+      canvas.height = totalH * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+      ctx.imageSmoothingEnabled = false;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,totalW,totalH);
+
+      ctx.fillStyle = '#111827';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '900 34px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+      ctx.fillText(CONFIG.title, totalW/2, pad + 22);
+
+      let y = pad + titleH - 6;
+      ctx.font = `800 ${legendFont}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+
+      for (const ln of legendLines){
+        let x = (totalW - ln.width) / 2;
+        for (let i=0;i<ln.items.length;i++){
+          const it = ln.items[i];
+          ctx.beginPath();
+          ctx.arc(x + dotSize/2, y + dotSize/2, dotSize/2, 0, Math.PI*2);
+          ctx.closePath();
+          ctx.fillStyle = it.color;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,.10)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          x += dotSize + 10;
+          ctx.fillStyle = '#111827';
+          ctx.fillText(it.label, x, y + dotSize/2);
+          x += ctxTmp.measureText(it.label).width;
+          if (i < ln.items.length - 1) x += legendGapX;
+        }
+        y += dotSize + legendGapY;
+      }
+
+      const tx = pad;
+      const ty = pad + titleH + legendH + 18;
+
+      const r = 18;
+      ctx.save();
+      ctx.beginPath();
+      roundedRect(ctx, tx, ty, tableW, tableH, r);
+      ctx.clip();
+
+      for (let rr=0; rr<n+1; rr++){
+        for (let cc=0; cc<n+1; cc++){
+          const x = tx + (cc===0 ? 0 : headW + (cc-1)*cellW);
+          const y2 = ty + rr*cellH;
+          const w = (cc===0 ? headW : cellW);
+          const h = cellH;
+
+          if (rr===0 || cc===0){
+            ctx.fillStyle = '#575b61';
+          } else {
+            const v = state.cells[rr-1][cc-1];
+            ctx.fillStyle = paletteColorByValue(v);
+          }
+          ctx.fillRect(x,y2,w,h);
+
+          if (rr===0 && cc===0){
+          } else if (rr===0){
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(CONFIG.names[cc-1], x + w/2, y2 + h/2);
+          } else if (cc===0){
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(CONFIG.names[rr-1], x + w/2, y2 + h/2);
+          } else {
+            const t = cellText(rr-1, cc-1);
+            if (t){
+              ctx.fillStyle = '#111827';
+              ctx.font = '800 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(t, x + w/2, y2 + h/2);
+            }
+          }
+        }
+      }
+
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(tx + headW, ty);
+      ctx.lineTo(tx + headW, ty + tableH);
+      for (let i=1;i<n;i++){
+        const xx = tx + headW + i*cellW;
+        ctx.moveTo(xx, ty);
+        ctx.lineTo(xx, ty + tableH);
+      }
+      ctx.moveTo(tx, ty + cellH);
+      ctx.lineTo(tx + tableW, ty + cellH);
+      for (let i=2;i<=n;i++){
+        const yy = ty + i*cellH;
+        ctx.moveTo(tx, yy);
+        ctx.lineTo(tx + tableW, yy);
+      }
+      ctx.stroke();
+
+      ctx.restore();
+
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      roundedRect(ctx, tx, ty, tableW, tableH, r);
+      ctx.stroke();
+
+      const a = document.createElement('a');
+      const safeTitle = (CONFIG.title || 'pref_table').replace(/[^\w가-힣\-\s]/g,'').trim() || 'pref_table';
+      a.download = `${safeTitle}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+
+    function roundedRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // =====================================================
+    // EVENTS
+    // =====================================================
+    btnAddPal.addEventListener('click', () => {
+      if (state.palette.length >= 8) return;
+      const base = ['#f5a8ac','#f6d2a7','#f7f2b2','#bfecc3','#ffffff','#c7d2fe','#fde68a','#fecaca'];
+      state.palette.push({
+        label: `의미${state.palette.length+1}`,
+        color: base[state.palette.length % base.length]
+      });
+      renderLegend();
+      renderPaletteEditor();
+      saveState();
+    });
+
+    btnReset.addEventListener('click', () => {
+      if (!confirm('표의 모든 색을 지울까요?')) return;
+      ensureCells();
+      for (let r=0;r<state.cells.length;r++){
+        for (let c=0;c<state.cells.length;c++) state.cells[r][c] = 0;
+      }
+      renderMatrix();
+      saveState();
+      closePicker();
+    });
+
+    btnExport.addEventListener('click', () => {
+      closePicker();
+      exportPNG();
+    });
+
+    document.addEventListener('click', () => closePicker());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePicker();
+    });
+    window.addEventListener('resize', () => {
+      if (pickerOpenFor) positionPicker(pickerOpenFor.anchorRect);
+    });
+
+    // =====================================================
+    // INIT
+    // =====================================================
+    function init(){
+      elTitle.textContent = CONFIG.title;
+      ensureCells();
+      renderLegend();
+      renderPaletteEditor();
+      renderMatrix();
+      saveState();
+    }
+
+    init();
+  </script>
+</body>
+</html>
