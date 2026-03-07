@@ -661,19 +661,20 @@
     // =====================================================
     function exportPNG(){
       const n = CONFIG.names.length;
-      const cellH = 70;
-      const headW = 92;
-      const cellW = 140;
+      const cellH = 96;      // 화면 셀 높이에 맞춤
+      const headW = 120;     // 현재 헤더 폭 느낌에 맞춤
+      const cellW = 160;     // 셀 가로 조금 넓게
 
       const tableW = headW + cellW * n;
       const tableH = cellH * (n + 1);
 
       const pad = 26;
-      const titleH = 54;
+      const titleH = 74;     // 제목 크게
       const legendGapX = 18;
       const legendGapY = 12;
-      const dotSize = 18;
-      const legendFont = 18;
+      const dotSize = 24;    // 범례 점 크게
+      const legendFont = 20; // 범례 글자 크게
+      const r = 24;          // 테이블 라운드 크게
 
       const ctxTmp = document.createElement('canvas').getContext('2d');
       ctxTmp.font = `800 ${legendFont}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial`;
@@ -710,7 +711,7 @@
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#9eb7d3';
       ctx.fillRect(0,0,totalW,totalH);
 
       ctx.fillStyle = '#111827';
@@ -733,7 +734,7 @@
           ctx.closePath();
           ctx.fillStyle = it.color;
           ctx.fill();
-          ctx.strokeStyle = 'rgba(0,0,0,.10)';
+          ctx.strokeStyle = '#f4f4f2';
           ctx.lineWidth = 1;
           ctx.stroke();
 
