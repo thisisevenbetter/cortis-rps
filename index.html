@@ -322,6 +322,7 @@
           <table id="matrix" aria-label="취향표"></table>
         </div>
       </div>
+    </div>
 
     <div style="height:16px"></div>
 
@@ -661,19 +662,19 @@
     // =====================================================
     function exportPNG(){
       const n = CONFIG.names.length;
-      const cellH = 70;
-      const headW = 92;
-      const cellW = 140;
+      const cellH = 96;
+      const headW = 120;
+      const cellW = 150;
 
       const tableW = headW + cellW * n;
       const tableH = cellH * (n + 1);
 
-      const pad = 26;
-      const titleH = 54;
-      const legendGapX = 18;
-      const legendGapY = 12;
-      const dotSize = 18;
-      const legendFont = 18;
+      const pad = 32;
+      const titleH = 88;
+      const legendGapX = 26;
+      const legendGapY = 14;
+      const dotSize = 26;
+      const legendFont = 20;
 
       const ctxTmp = document.createElement('canvas').getContext('2d');
       ctxTmp.font = `800 ${legendFont}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial`;
@@ -703,21 +704,22 @@
       const totalW = tableW + pad*2;
       const totalH = pad + titleH + legendH + 18 + tableH + pad;
 
-      const scale = 2;
+      const scale = 3;
       const canvas = document.createElement('canvas');
       canvas.width = totalW * scale;
       canvas.height = totalH * scale;
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
+      ctx.imageSmoothingEnabled = true;
 
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#f4f4f2';
       ctx.fillRect(0,0,totalW,totalH);
 
-      ctx.fillStyle = '#111827';
+      ctx.fillStyle = '#111111';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = '900 34px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
-      ctx.fillText(CONFIG.title, totalW/2, pad + 22);
+      ctx.font = '1000 56px Pretendard, Noto Sans KR, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(CONFIG.title, totalW/2, pad + 30);
 
       let y = pad + titleH - 6;
       ctx.font = `800 ${legendFont}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial`;
@@ -749,7 +751,7 @@
       const tx = pad;
       const ty = pad + titleH + legendH + 18;
 
-      const r = 18;
+      const r = 24;
       ctx.save();
       ctx.beginPath();
       roundedRect(ctx, tx, ty, tableW, tableH, r);
@@ -763,7 +765,7 @@
           const h = cellH;
 
           if (rr===0 || cc===0){
-            ctx.fillStyle = '#575b61';
+            ctx.fillStyle = '#9eb7d3';
           } else {
             const v = state.cells[rr-1][cc-1];
             ctx.fillStyle = paletteColorByValue(v);
@@ -773,21 +775,21 @@
           if (rr===0 && cc===0){
           } else if (rr===0){
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+            ctx.font = '900 22px Pretendard, Noto Sans KR, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(CONFIG.names[cc-1], x + w/2, y2 + h/2);
           } else if (cc===0){
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+            ctx.font = '900 22px Pretendard, Noto Sans KR, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(CONFIG.names[rr-1], x + w/2, y2 + h/2);
           } else {
             const t = cellText(rr-1, cc-1);
             if (t){
-              ctx.fillStyle = '#111827';
-              ctx.font = '800 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial';
+              ctx.fillStyle = '#4b4b4b';
+              ctx.font = '800 20px Pretendard, Noto Sans KR, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText(t, x + w/2, y2 + h/2);
@@ -796,7 +798,7 @@
         }
       }
 
-      ctx.strokeStyle = '#d1d5db';
+      ctx.strokeStyle = '#f4f4f2';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(tx + headW, ty);
